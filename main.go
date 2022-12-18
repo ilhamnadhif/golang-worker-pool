@@ -6,6 +6,7 @@ import (
 	"fmt"
 	_ "github.com/lib/pq"
 	"log"
+	"math"
 	"os"
 	"sync"
 	"time"
@@ -71,14 +72,11 @@ func ReadFile(datas chan Data) {
 	fmt.Println(fmt.Sprintf("===== total data berjumlah %d data", counter))
 }
 
-var totalError = 0
-
 func Worker(stmt *sql.Stmt, wg *sync.WaitGroup, data chan Data) {
 	for v := range data {
 		for {
 			_, err := stmt.Exec(v.ID, v.Random)
 			if err != nil {
-				fmt.Println("error insert", err)
 				continue
 			} else {
 				break
@@ -103,12 +101,12 @@ func main() {
 		fmt.Println("error db prepare", err)
 	}
 
-	for i := 0; i < dbMaxConns; i++ {
+	for i := 0; i < totalWorker; i++ {
 		wg.Add(1)
 		go Worker(prepare, wg, datas)
 	}
 	wg.Wait()
 
-	fmt.Println("totalError", totalError)
-	fmt.Println(time.Since(startTime))
+	duration := time.Since(startTime)
+	fmt.Println("done in", int(math.Ceil(duration.Seconds())), "seconds")
 }
