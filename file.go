@@ -3,17 +3,18 @@ package main
 import (
 	"encoding/csv"
 	"fmt"
-	"github.com/google/uuid"
 	"log"
 	"math/rand"
 	"os"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 func GenerateLine() []string {
-	return []string{uuid.NewString(), strconv.Itoa(rand.Int())}
+	return []string{uuid.NewString(), strconv.Itoa(rand.Int()), strconv.Itoa(rand.Int())}
 }
 
 func main() {
@@ -32,7 +33,7 @@ func main() {
 	for i := 1; i <= 1000; i++ {
 		wg.Add(1)
 		go func() {
-			for j := 1; j <= 1000; j++ {
+			for j := 1; j <= 100; j++ {
 				mutex.Lock()
 				err2 := csvwriter.Write(GenerateLine())
 				if err2 != nil {
