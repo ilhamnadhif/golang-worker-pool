@@ -14,7 +14,7 @@ import (
 )
 
 func GenerateLine() []string {
-	return []string{uuid.NewString(), strconv.Itoa(rand.Int()), strconv.Itoa(rand.Int())}
+	return []string{uuid.NewString(), strconv.Itoa(rand.Int())}
 }
 
 func main() {

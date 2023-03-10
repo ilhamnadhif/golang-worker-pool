@@ -4,12 +4,15 @@ import (
 	"database/sql"
 	"encoding/csv"
 	"fmt"
-	_ "github.com/lib/pq"
 	"log"
 	"math"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/lib/pq"
+	_ "github.com/lib/pq"
+	"github.com/sirupsen/logrus"
 )
 
 func LogFatalIfErr(err error) {
@@ -77,7 +80,18 @@ func Worker(stmt *sql.Stmt, wg *sync.WaitGroup, data chan Data) {
 		for {
 			_, err := stmt.Exec(v.ID, v.Random)
 			if err != nil {
-				continue
+				errPq, ok := err.(*pq.Error)
+				if ok {
+					if errPq.Code == "53300" {
+						log.Println(errPq.Code, errPq.Message, err.Error())
+						continue
+					} else {
+						logrus.Error(err.Error())
+						break
+					}
+				} else {
+					break
+				}
 			} else {
 				break
 			}
@@ -88,6 +102,15 @@ func Worker(stmt *sql.Stmt, wg *sync.WaitGroup, data chan Data) {
 
 func main() {
 	startTime := time.Now()
+
+	file, err := os.OpenFile("app.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
+	logrus.SetReportCaller(true)
+	logrus.SetOutput(file)
+	logrus.SetFormatter(&logrus.JSONFormatter{})
+
 	db, err := OpenDbConnection()
 	LogFatalIfErr(err)
 	defer db.Close()
